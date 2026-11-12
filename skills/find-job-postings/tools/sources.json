@@ -1,0 +1,401 @@
+{
+ "_readme": [
+  "Aggregator source registry for posting-first sourcing.",
+  "",
+  "Every entry here was verified by actually fetching it, never from general",
+  "knowledge. `verified` is the date that happened. `status` is what the fetch",
+  "proved, not what the site claims.",
+  "",
+  "status values:",
+  "  feed      clean JSON or RSS, pull directly, no rendering",
+  "  extract   structured payload embedded in HTML, needs a parser",
+  "  follow    no payload, but real job hrefs to fetch (route 6)",
+  "  render    JS shell, needs Playwright or Chrome (route 7)",
+  "  blocked   returns 403 or a bot challenge to server-side requests",
+  "",
+  "Run `python3 sources.py --probe` to check every `feed` entry still matches",
+  "its required_fields. That is the drift alarm; it does not re-derive method.",
+  "",
+  "To add a source: follow the six steps at the bottom of",
+  "reference/sourcing-posting-first.md, then append an entry here.",
+  "",
+  "Vertical-specific sources are NOT here. See reference/vertical-sources.md.",
+  "statuses also include: sample = serves a fixed recent slice, not queryable;",
+  "its advertised total is marketing, not reachable data.",
+  "statuses also include: keyed = large and real but needs a free API key."
+ ],
+ "sources": {
+  "remotive": {
+   "status": "sample",
+   "verified": "2026-08-11",
+   "url": "https://remotive.com/api/remote-jobs",
+   "params": {},
+   "payload": "jobs",
+   "required_fields": [
+    "title",
+    "company_name",
+    "candidate_required_location",
+    "publication_date",
+    "url",
+    "category"
+   ],
+   "id_field": "id",
+   "date_field": "publication_date",
+   "notes": "CAPPED AT 20. search, limit and category params are all ignored by the public endpoint. Latest-20 sample, not a queryable source.",
+   "served_cap": 20,
+   "declared_total": 20
+  },
+  "workingnomads": {
+   "status": "feed",
+   "verified": "2026-08-11",
+   "url": "https://www.workingnomads.com/api/exposed_jobs/",
+   "payload": "$root",
+   "required_fields": [
+    "title",
+    "company_name",
+    "location",
+    "pub_date",
+    "category_name"
+   ],
+   "date_field": "pub_date",
+   "notes": "Bare list, ~50 rows, full dump. Filter locally."
+  },
+  "jobicy": {
+   "status": "feed",
+   "verified": "2026-08-11",
+   "url": "https://jobicy.com/api/v2/remote-jobs",
+   "params": {
+    "count": 50
+   },
+   "payload": "jobs",
+   "required_fields": [
+    "jobTitle",
+    "companyName",
+    "jobGeo",
+    "pubDate",
+    "url"
+   ],
+   "id_field": "id",
+   "date_field": "pubDate",
+   "notes": "Genuinely queryable: count, geo (usa) and tag all work and visibly change results. `industry` returns 400; do not use it.",
+   "served_cap": null,
+   "queryable": [
+    "count",
+    "geo",
+    "tag"
+   ]
+  },
+  "himalayas": {
+   "status": "sample",
+   "verified": "2026-08-11",
+   "url": "https://himalayas.app/jobs/api",
+   "params": {},
+   "payload": "jobs",
+   "required_fields": [
+    "title",
+    "companyName",
+    "locationRestrictions",
+    "pubDate",
+    "applicationLink"
+   ],
+   "date_field": "pubDate",
+   "notes": "TRAP: advertises 100,618 jobs and serves 20. limit, page, offset, skip, start and every search spelling are ignored. A declared total is not an available total. Latest-20 sample only.",
+   "served_cap": 20,
+   "declared_total": 100618
+  },
+  "remoteok": {
+   "status": "feed",
+   "verified": "2026-08-11",
+   "url": "https://remoteok.com/api",
+   "payload": "$root",
+   "skip_first": true,
+   "required_fields": [
+    "position",
+    "company",
+    "date",
+    "url"
+   ],
+   "id_field": "id",
+   "date_field": "date",
+   "notes": "TRAP: element 0 is a legal/metadata object, not a job. Skip it. Full dump of ~100 latest, no query params. Skews engineering."
+  },
+  "weworkremotely": {
+   "status": "feed",
+   "verified": "2026-08-11",
+   "url": "https://weworkremotely.com/remote-jobs.rss",
+   "payload": "$rss",
+   "required_fields": [
+    "title",
+    "link",
+    "pubDate"
+   ],
+   "date_field": "pubDate",
+   "notes": "RSS, 100 items. Per-category feeds at /categories/<slug>.rss are the way to widen."
+  },
+  "builtin": {
+   "status": "follow",
+   "verified": "2026-08-11",
+   "url": "https://builtin.com/jobs/remote",
+   "job_href": "/job/<slug>/<id>",
+   "notes": "180 job hrefs on page one plus JSON-LD ItemList and ListItem. Tech-heavy, city-scoped variants exist."
+  },
+  "workatastartup": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://www.workatastartup.com/companies",
+   "payload": "data-page attribute (Inertia.js), ~16KB JSON",
+   "notes": "YC companies. Route 3 in the company-first list; also usable as a universe source."
+  },
+  "welcometothejungle": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://app.welcometothejungle.com/jobs",
+   "payload": "apolloState",
+   "notes": "Formerly Otta. Same extraction shape as Wellfound."
+  },
+  "dice": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://www.dice.com/jobs",
+   "payload": "self.__next_f (Next.js App Router RSC flight data)",
+   "notes": "35 job-detail hrefs as a fallback if the flight data is painful. Tech only."
+  },
+  "hacker_careers": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://hacker-careers.com/",
+   "payload": "self.__next_f",
+   "notes": "Mirrors HN Who-is-hiring. Small. 17 job hrefs on the index."
+  },
+  "talent_com": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://www.talent.com/jobs",
+   "payload": "self.__next_f, plus JSON-LD ItemList",
+   "notes": "Alive but thin on the default query URL; needs the right search path before judging yield."
+  },
+  "aitmpl_jobs": {
+   "status": "render",
+   "verified": "2026-08-11",
+   "url": "https://aitmpl.com/jobs",
+   "notes": "Client-rendered. Indexes Claude Code jobs, so worth a render pass."
+  },
+  "hnhiring": {
+   "status": "render",
+   "verified": "2026-08-11",
+   "url": "https://hnhiring.com/",
+   "notes": "Now points at jobanni.com. Use the HN Algolia comment search instead: hn.algolia.com/api/v1/search?query=<term>&tags=comment"
+  },
+  "indeed": {
+   "status": "blocked",
+   "verified": "2026-08-11",
+   "notes": "403 on a repeat request. Rate limited or bot-walled."
+  },
+  "glassdoor": {
+   "status": "blocked",
+   "verified": "2026-08-11",
+   "notes": "403 server-side."
+  },
+  "ziprecruiter": {
+   "status": "blocked",
+   "verified": "2026-08-11",
+   "notes": "403 server-side."
+  },
+  "simplyhired": {
+   "status": "blocked",
+   "verified": "2026-08-11",
+   "notes": "403 server-side."
+  },
+  "hiringcafe": {
+   "status": "feed",
+   "verified": "2026-08-11",
+   "url": "https://hiringcafe.com/",
+   "payload": "__NEXT_DATA__.props.pageProps.ssrHits",
+   "required_fields": [
+    "source",
+    "board_token",
+    "apply_url",
+    "is_expired",
+    "v5_processed_job_data",
+    "enriched_company_data"
+   ],
+   "volatile": [
+    "buildId"
+   ],
+   "notes": "Full method in hiringcafe-harvest-method.md. Highest yield of any source here."
+  },
+  "wellfound": {
+   "status": "feed",
+   "verified": "2026-08-11",
+   "url": "https://wellfound.com/role/r/account-executive",
+   "payload": "__NEXT_DATA__.props.pageProps.apolloState.data",
+   "required_fields": [
+    "JobListingSearchResult",
+    "StartupResult"
+   ],
+   "notes": "Full method in wellfound-harvest-method.md. WebFetch 403s, curl works. Lead source only, verify against the real ATS."
+  },
+  "themuse": {
+   "status": "feed",
+   "verified": "2026-08-11",
+   "general_market": true,
+   "url": "https://www.themuse.com/api/public/jobs",
+   "params": {
+    "page": 0
+   },
+   "payload": "results",
+   "pagination": "?page=N, 20 per page",
+   "declared_total": 407252,
+   "declared_pages": 20363,
+   "served_cap": 20,
+   "required_fields": [
+    "id",
+    "name",
+    "company",
+    "locations",
+    "categories",
+    "levels",
+    "contents",
+    "publication_date"
+   ],
+   "date_field": "publication_date",
+   "notes": "BIGGEST no-key general source. Declares 407,252 jobs / 20,363 pages, NOT remote-only. HARD DEPTH CAP: pages are numbered from 0 and page 99 is the last that works (page 100+ returns HTTP 400), so any single query reaches at most 2,000 jobs. The 407K is only reachable by PARTITIONING with filters until page_count <= 100. Observed: category=Sales 447 pages, location='New York, NY' 688, level='Entry Level' 4486, Sales+NYC 57 (fully walkable). Category names must match their taxonomy exactly: 'Accounting' returns 0, real names include Sales, Healthcare, Business Operations, Data and Analytics, Human Resources and Recruitment, Management, Software Engineering, 'Installation, Maintenance, and Repairs'.",
+   "page_depth_cap": 99,
+   "reachable_per_query": 1980,
+   "partition_by": [
+    "category",
+    "location",
+    "level"
+   ]
+  },
+  "arbeitnow": {
+   "status": "feed",
+   "verified": "2026-08-11",
+   "general_market": true,
+   "url": "https://www.arbeitnow.com/api/job-board-api",
+   "payload": "data",
+   "pagination": "?page=N, 175 per page, meta.current_page + links.next",
+   "served_cap": 175,
+   "required_fields": [
+    "title",
+    "company_name",
+    "location",
+    "created_at",
+    "job_types",
+    "url"
+   ],
+   "date_field": "created_at",
+   "notes": "Free public API, 175 per page, properly paginated. Their terms ask you not to abuse it and to link back; honour that. Updated hourly, ordered by created_at. EU-heavy."
+  },
+  "linkedin_guest": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "general_market": true,
+   "url": "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search",
+   "params": {
+    "keywords": "",
+    "location": "",
+    "start": 0
+   },
+   "notes": "Unauthenticated and it WORKS: 30 job cards per request, real titles, ?start=N paginates. Returns HTML card fragments, not JSON, so it needs a proper parser. My first probe called it empty because the regex looked for /job/ and LinkedIn uses /jobs/view/ plus entity urns. Do not repeat that; the 30KB body was always real."
+  },
+  "adzuna": {
+   "status": "keyed",
+   "verified": "2026-08-11",
+   "general_market": true,
+   "url": "https://api.adzuna.com/v1/api/jobs/us/search/1",
+   "notes": "Millions of listings, US and many countries, general market. Needs a free app_id and app_key. Probably the highest-value key to get."
+  },
+  "careerjet": {
+   "status": "keyed",
+   "verified": "2026-08-11",
+   "general_market": true,
+   "url": "http://public.api.careerjet.net/search",
+   "notes": "Large general aggregator. Needs a free affid. Returned an error object without one."
+  },
+  "usajobs": {
+   "status": "keyed",
+   "verified": "2026-08-11",
+   "general_market": true,
+   "url": "https://data.usajobs.gov/api/search",
+   "notes": "All US federal jobs. 401 without a key; free registration, key goes in request headers."
+  },
+  "findwork": {
+   "status": "keyed",
+   "verified": "2026-08-11",
+   "general_market": true,
+   "url": "https://findwork.dev/api/jobs/",
+   "notes": "401 without a token. Free tier available."
+  },
+  "monster": {
+   "status": "blocked",
+   "verified": "2026-08-11",
+   "notes": "403 server-side."
+  },
+  "careerbuilder": {
+   "status": "blocked",
+   "verified": "2026-08-11",
+   "notes": "403 server-side."
+  },
+  "craigslist": {
+   "status": "blocked",
+   "verified": "2026-08-11",
+   "notes": "403 on the RSS endpoint. Was historically open; retry via Chrome if local/hourly roles matter."
+  },
+  "startup_jobs": {
+   "status": "blocked",
+   "verified": "2026-08-11",
+   "notes": "Cloudflare 'Just a moment' challenge."
+  },
+  "snagajob": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://www.snagajob.com/search",
+   "notes": "31 job hrefs, hourly/local roles. Needs a parser; volume unmeasured."
+  },
+  "jobright": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://jobright.ai/jobs",
+   "notes": "__NEXT_DATA__ present. Needs a parser; volume unmeasured."
+  },
+  "trueup": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://www.trueup.io/jobs",
+   "notes": "__NEXT_DATA__ present, tech market. Needs a parser; volume unmeasured."
+  },
+  "levelsfyi": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://www.levels.fyi/jobs",
+   "notes": "__NEXT_DATA__ present, tech market. Needs a parser; volume unmeasured."
+  },
+  "simplify": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://simplify.jobs/",
+   "notes": "self.__next_f. Needs a parser; volume unmeasured."
+  },
+  "greenhouse_seek": {
+   "status": "extract",
+   "verified": "2026-08-11",
+   "url": "https://my.greenhouse.io/jobs",
+   "notes": "data-page, Greenhouse's own job-seeker search across its customers. Needs a parser; volume unmeasured."
+  },
+  "a16z_speedrun": {
+   "status": "feed",
+   "verified": "2026-08-21",
+   "url": "https://speedrun-talent-network.com/jobs.rss",
+   "payload": "$rss",
+   "required_fields": [
+    "title",
+    "link",
+    "pubDate",
+    "description"
+   ],
+   "date_field": "pubDate",
+   "notes": "The RSS is only the 100 newest and exists here as the drift alarm. The real surface is the sitemap: /sitemaps/jobs.xml (17,705 job urls) and /sitemaps/companies.xml (822 companies), plus 51 /collections/<slug> pages whose cards carry per-company data-rp (remote-first / hybrid-friendly / onsite-leaning) and data-fns (which job families the company hires for, including sales) for 1,509 companies. EVERY job page carries a schema.org JobPosting block with company, datePosted, jobLocationType, applicantLocationRequirements, baseSalary, validThrough, the full description, and the apply link on the company's OWN ATS carrying that job's native id, so rows land pre-verified. Measured 2026-08-21: 99 of 99 rows clearing remote+US+IC+ceiling were live in their own ATS feed, and only 11 percent came back segment-Unspec against 34 percent from the aggregators. 453 pages pull in ~40 seconds with zero model tokens. Implementation: ~/my_applications/remote-ae-job-hunt/scripts/harvest_speedrun.py. CAUTION: not a complete mirror of any company's careers page. Amazon, Walmart and CVS appear with zero AE roles and 1Password is labelled as hiring sales while listing none, so absence here is NOT evidence of no role."
+  }
+ }
+}
